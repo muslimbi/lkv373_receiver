@@ -6,8 +6,8 @@ network:
   audio_port: 2066
   control_port_src: 2065
   control_port_dst: 2067
-  interface_ip: "0.0.0.0"
-  source_ip: null
+  interface_ip: "192.168.168.10"
+  source_ip: "192.168.168.55"
   socket_buffer_size: 2097152  # 2MB receive buffer
 
 reassembly:

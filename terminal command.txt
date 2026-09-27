@@ -1,5 +1,5 @@
 # 1. Run Live Multicast Receiver
-python main.py --group 226.2.2.2 --port 2068 --interface 192.168.168.100
+python main.py --group 226.2.2.2 --port 2068 --interface 192.168.168.10
 
 # 2. Run Fullscreen Mode on Selected Monitor
 python main.py --fullscreen --monitor 0
