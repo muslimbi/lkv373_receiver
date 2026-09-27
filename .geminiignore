@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Large Capture Data & Extracted Media Outputs
+sample_capture.bin
+test_extracted_frames/
+*.bin
+*.pcap
+*.pcapng
+*.h264
+*.h265
+*.mjpg
+*.mp4
+*.avi
+
+# Logs and Temporary files
+*.log
+tmp/
+temp/
+
+# Environment variables & secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Editor / IDE configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
