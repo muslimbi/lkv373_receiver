@@ -1,0 +1,17 @@
+# 1. Run Live Multicast Receiver
+python main.py --group 226.2.2.2 --port 2068 --interface 192.168.168.100
+
+# 2. Run Fullscreen Mode on Selected Monitor
+python main.py --fullscreen --monitor 0
+
+# 3. Play Back Wireshark PCAP / PCAPNG File
+python main.py --pcap hdmi.pcapng
+
+# 4. Extract Reassembled JPEG Frames
+python tools/extract_frames.py hdmi.pcapng --output-dir frames
+
+# 5. Run Network & Stream Diagnostic Analysis
+python tools/analyze_pcap.py hdmi.pcapng
+
+# 6. Run Pytest Suite
+python -m pytest lkv373_receiver/tests

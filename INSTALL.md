@@ -1,48 +1,60 @@
-# Installation & Setup Guide
+# LKV373 HDMI-over-IP Receiver Installation & Setup Guide
 
-## System Requirements
-- **Operating System**: Windows 10/11 or Linux (Ubuntu 20.04+)
-- **Python Version**: Python 3.9+ (Python 3.13 recommended)
-- **FFmpeg**: Installed and accessible on system PATH
+## Requirements
 
----
-
-## Python Environment Setup
-
-1. **Clone or Open Project Directory**:
-   ```cmd
-   cd /d d:\hdmi
-   ```
-
-2. **Install Required Python Packages**:
-   ```cmd
-   pip install numpy opencv-python pytest pillow psutil ffmpy
-   ```
-
-3. **Verify FFmpeg Installation**:
-   ```cmd
-   ffmpeg -version
-   ```
+- **Operating System:** Windows 10/11 or Linux
+- **Python Version:** Python 3.10+
+- **Network:** 1Gbps Ethernet interface connected to the LKV373 transmitter network switch or direct cable.
 
 ---
 
-## Network Adapter Configuration (Standard Multicast LAN)
+## Installation Steps
 
-*Note: No VLAN tagging is required for standard operation.*
+1. **Clone or Extract the Repository:**
+   ```bash
+   cd d:\hdmi
+   ```
 
-### Windows:
-1. Open **Network Connections** (`ncpa.cpl`).
-2. Select the Ethernet interface connected to the HDMI network.
-3. Configure static IP address for the HDMI Receiver:
-   - **IP Address**: `192.168.168.10`
-   - **Subnet Mask**: `255.255.255.0`
+2. **Install Python Dependencies:**
+   ```bash
+   python -m pip install PySide6 opencv-python pillow numpy PyYAML pytest
+   ```
 
-### Linux:
+3. **Verify Installation & Run Tests:**
+   ```bash
+   python -m pytest lkv373_receiver/tests
+   ```
+
+---
+
+## Usage Examples
+
+### 1. Live Receiver Mode
+Receive multicast stream on group `226.2.2.2:2068`:
 ```bash
-# Configure receiver IP address on standard network interface
-sudo ip addr add 192.168.168.10/24 dev eth0
-sudo ip link set dev eth0 up
+python main.py --group 226.2.2.2 --port 2068 --interface 192.168.168.100
+```
 
-# Add multicast route
-sudo ip route add 226.2.2.2 dev eth0
+### 2. Fullscreen HDMI Output Mode
+Display full screen on specific monitor index:
+```bash
+python main.py --fullscreen --monitor 0
+```
+
+### 3. PCAP Offline Playback Mode
+Play back captured Wireshark `.pcapng` or `.pcap` file at ~30 FPS:
+```bash
+python main.py --pcap hdmi.pcapng
+```
+
+### 4. Extract Frames to Images
+Extract JPEG files from PCAP file:
+```bash
+python tools/extract_frames.py sample_capture.bin --output-dir extracted_frames
+```
+
+### 5. Run Network Diagnostics & PCAP Analysis
+Analyze traffic breakdown and protocol statistics:
+```bash
+python tools/analyze_pcap.py sample_capture.bin
 ```

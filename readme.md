@@ -1,126 +1,91 @@
-# HDMI-over-IP Multicast Video Receiver & Display System
+# LKV373 / Lenkeng HDMI-over-IP MJPEG Receiver
 
-A high-performance, modular Python/C++ HDMI-over-IP receiver system that captures multicast UDP streams (`226.2.2.2:2068`), reverse-engineers protocol encapsulation headers, reassembles fragmented video frames, decodes compressed streams (MJPEG, H.264, H.265, MPEG-TS), and outputs real-time low-latency video to computer displays and HDMI monitors.
+High-performance Python receiver and real-time viewer for LKV373 and Lenkeng HDMI-over-IP hardware transmitters. Encapsulated MJPEG frames sent via UDP multicast on group `226.2.2.2:2068` are received, reassembled, decoded, and rendered with sub-frame latency and diagnostic statistics.
 
 ---
 
-## Key Features
+## Features
 
-- **Live UDP Multicast Receiver**: Cross-platform IPv4 socket management (`226.2.2.2:2068`), multi-threaded rx loop, socket buffer tuning (`8MB RCVBUF`), and real-time network throughput metrics.
-- **Protocol Discovery & Packet Parsing**: Zero-assumption header inspection supporting HDbitT/Lenkeng (16-byte headers), RTP (12-byte headers), MPEG-TS (0x47 sync byte), custom sequence headers, and Shannon entropy analysis.
-- **Frame Reassembly Engine**: Robust frame boundary detection, packet sequence reordering, packet loss tracking, duplicate removal, and stream restart recovery.
-- **Hardware-Accelerated Video Decoding**: Decodes MJPEG, H.264, H.265, and MPEG-TS with hardware acceleration flags (`DXVA2`, `D3D11VA`, `NVDEC`, `QSV`) and CPU fallback.
-- **Low-Latency Dual-Mode Video Viewer**:
-  - **Mode 1**: Windowed low-latency viewer with HUD performance stats.
-  - **Mode 2**: Fullscreen output to secondary monitor / HDMI connected TV display.
-- **Diagnostic Toolkit (`tools/`)**: Includes PCAP analyzer, payload dumper, codec signature scanner, live stream recorder, and synthetic HDMI transmitter simulator.
-- **Automated Test Suite (`tests/`)**: Unit tests covering packet parsing, reassembly, signature detection, and socket metrics.
+- **Live Multicast Receiver:** Binds to `226.2.2.2:2068` on Windows and Linux with configurable network interface selection.
+- **Stateful JPEG Reassembler:** Handles 16-bit frame sequence rollover, chunk re-ordering, packet loss, duplicate detection, and missing chunk timeout cleanup.
+- **Direct Low-Latency JPEG Decoding:** Decodes raw JPEG frames directly to GPU/display buffers using OpenCV without intermediate transcoding.
+- **PySide6 Real-Time Viewer:**
+  - Real-time video rendering (1280x1024 or auto-resolution).
+  - Multi-monitor selection (`--monitor 0`, `--monitor 1`).
+  - Fullscreen output toggle (`F11` or `--fullscreen`).
+  - On-screen HUD Overlay (`D` or `Tab`) with live FPS, packet rate, packet/frame loss, duplicate count, decode latency, and frame sequence numbers.
+- **PCAP / PCAPNG Offline Playback Engine:** Play back Wireshark captures (`--pcap hdmi.pcapng`) at 30 FPS.
+- **Frame Extractor Tool:** Export all reassembled JPEG images to disk (`python tools/extract_frames.py capture.pcapng`).
+- **Network Diagnostic Analyzer:** Command-line tool to inspect captures (`python tools/analyze_pcap.py capture.pcapng`).
+- **Modular Audio Receiver:** Listens on UDP port 2066 for audio payload packets.
 
 ---
 
 ## Architecture Overview
 
 ```
-HDMI Transmitter (192.168.168.55)
-       ↓ UDP Multicast 226.2.2.2:2068
-Network Receiver Thread (`multicast_receiver.py`)
-       ↓ Raw Packets (Bounded Queue)
-Protocol & Header Parser (`packet_parser.py`)
-       ↓ Parsed Packets
-Frame Reassembler (`frame_reassembler.py`)
-       ↓ Reassembled Frame Payload
-Video Decoder (`video_decoder.py`)
-       ↓ BGR Image Frame
-Video Viewer & HDMI Output (`video_viewer.py`)
++---------------------------+
+| LKV373 HDMI Transmitter   |
++---------------------------+
+              │
+              ▼ Multicast (UDP 226.2.2.2:2068)
++---------------------------+
+| Network Receiver          | (lkv373_receiver/receiver/multicast.py)
++---------------------------+
+              │
+              ▼ 4-Byte LKV373 Header (Frame #, Chunk #)
++---------------------------+
+| Packet Parser             | (lkv373_receiver/receiver/packet.py)
++---------------------------+
+              │
+              ▼ Chunk Array
++---------------------------+
+| Frame Reassembler         | (lkv373_receiver/receiver/reassembler.py)
++---------------------------+
+              │
+              ▼ Validated JPEG Buffer (FF D8 ... FF D9)
++---------------------------+
+| Direct JPEG Decoder       | (lkv373_receiver/video/jpeg_decoder.py)
++---------------------------+
+              │
+              ▼ BGR Image Frame
++---------------------------+
+| PySide6 Video Renderer    | (lkv373_receiver/video/renderer.py)
++---------------------------+
+              │
+              ▼
+    PC Monitor / HDMI Display
 ```
 
 ---
 
-## Quickstart
+## Quick Start
 
-### 1. Run Live Multicast Receiver
-```cmd
-python hdmi_receiver.py --group 226.2.2.2 --port 2068 --interface 192.168.168.10
+### 1. Live Multicast Streaming Mode
+```bash
+python main.py --group 226.2.2.2 --port 2068 --interface 192.168.168.100
 ```
 
-### 2. Fullscreen HDMI Output Mode
-```cmd
-python hdmi_receiver.py --fullscreen
+### 2. Playback Wireshark PCAP Capture
+```bash
+python main.py --pcap hdmi.pcapng
 ```
 
-### 3. Run Offline File Playback / Analysis
-```cmd
-python hdmi_receiver.py --input-file sample_capture.bin
+### 3. Extract JPEG Frames
+```bash
+python tools/extract_frames.py sample_capture.bin --output-dir extracted_frames
 ```
 
----
-
-## Keyboard Controls (Viewer)
-
-- `F` or `F11`: Toggle Fullscreen HDMI output mode
-- `S`: Toggle HUD stats overlay (FPS, Codec, Bitrate, Packet Loss, Latency)
-- `Q` or `ESC`: Exit receiver
-
----
-
-## Diagnostic Tools (`tools/`)
-
-```cmd
-# 1. Analyze PCAP or binary capture file
-python tools/analyze_pcap.py capture.bin
-
-# 2. Inspect raw packet headers & entropy
-python tools/inspect_payload.py capture.bin --count 5
-
-# 3. Detect video codec signature
-python tools/detect_codec.py capture.bin
-
-# 4. Extract reassembled video frames
-python tools/dump_frames.py capture.bin --output-dir extracted_frames
-
-# 5. Record live multicast stream to file
-python tools/capture_multicast.py --group 226.2.2.2 --port 2068 --output live_capture.bin --duration 10
-
-# 6. Run synthetic HDMI transmitter simulator (for offline testing)
-python tools/simulate_transmitter.py --fps 30
+### 4. Run Diagnostic Network Analysis
+```bash
+python tools/analyze_pcap.py sample_capture.bin
 ```
 
 ---
 
-## Running Automated Tests
+## Unit Testing
 
-```cmd
-python -m pytest tests/
-```
-
----
-
-## Project Structure
-
-```
-d:\hdmi\
-├── hdmi_receiver.py          # Main application entry point
-├── multicast_receiver.py     # Multicast socket rx thread
-├── packet_parser.py          # Header parser & protocol discovery
-├── frame_reassembler.py      # Frame reassembler & packet loss handler
-├── video_decoder.py          # Video decoder engine (MJPEG/H.264/H.265)
-├── video_viewer.py           # Real-time windowed & fullscreen HDMI display
-├── protocol.py               # Protocol definitions & enums
-├── protocol_report.md        # Protocol discovery report
-├── ARCHITECTURE.md           # Architecture documentation
-├── PROTOCOL.md               # Encapsulation specifications
-├── INSTALL.md                # Installation & setup guide
-├── TROUBLESHOOTING.md        # Multicast & diagnostic guide
-├── tools/                    # Command-line diagnostic tools
-│   ├── analyze_pcap.py
-│   ├── capture_multicast.py
-│   ├── inspect_payload.py
-│   ├── detect_codec.py
-│   ├── dump_frames.py
-│   └── simulate_transmitter.py
-└── tests/                    # Automated pytest test suite
-    ├── test_packet_parser.py
-    ├── test_frame_reassembler.py
-    ├── test_codec_detector.py
-    └── test_multicast_receiver.py
+Run the pytest test suite:
+```bash
+python -m pytest lkv373_receiver/tests
 ```

@@ -1,0 +1,35 @@
+# LKV373 / Lenkeng HDMI-over-IP MJPEG Receiver Configuration
+
+network:
+  multicast_group: "226.2.2.2"
+  video_port: 2068
+  audio_port: 2066
+  control_port_src: 2065
+  control_port_dst: 2067
+  interface_ip: "0.0.0.0"
+  source_ip: null
+  socket_buffer_size: 2097152  # 2MB receive buffer
+
+reassembly:
+  max_active_frames: 4
+  frame_timeout_ms: 200
+  header_size: 4
+  chunk_size: 1024
+
+video:
+  expected_width: 1280
+  expected_height: 1024
+  target_fps: 30
+  strict_jpeg_validation: true
+
+display:
+  window_title: "LKV373 HDMI-over-IP MJPEG Receiver"
+  default_width: 1280
+  default_height: 1024
+  fullscreen: false
+  monitor_index: 0
+  show_diagnostics_overlay: true
+
+save:
+  output_dir: "extracted_frames"
+  video_codec: "mp4v"

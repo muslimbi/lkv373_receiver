@@ -17,6 +17,11 @@ venv.bak/
 htmlcov/
 .tox/
 .nox/
+test_extracted_frames/
+extracted_test_frames/
+hdmi_pcap_frames/
+saved_frames/
+frames/
 
 # Capture Data & Extracted Test Frames
 sample_capture.bin
