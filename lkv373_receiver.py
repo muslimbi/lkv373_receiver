@@ -38,6 +38,7 @@ import cv2
 
 DEFAULT_GROUP = "226.2.2.2"
 DEFAULT_PORT = 2068
+DEFAULT_INTERFACE = "192.168.168.10"
 
 MAX_FRAME_BUFFERS = 32
 DEFAULT_FRAME_TIMEOUT = 2.0
@@ -690,10 +691,10 @@ def build_parser():
 
     parser.add_argument(
         "--interface",
-        default=None,
+        default=DEFAULT_INTERFACE,
         help=(
-            "Local Ethernet IPv4 address used for multicast. "
-            "Example: 192.168.168.10"
+            f"Local Ethernet IPv4 address used for multicast. "
+            f"(default: {DEFAULT_INTERFACE})"
         ),
     )
 

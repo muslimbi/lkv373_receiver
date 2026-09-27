@@ -191,7 +191,7 @@ def main():
     # Network options
     parser.add_argument("--group", default="226.2.2.2", help="Multicast group IP (default: 226.2.2.2)")
     parser.add_argument("--port", type=int, default=2068, help="UDP video port (default: 2068)")
-    parser.add_argument("--interface", default="0.0.0.0", help="Network interface IP to bind (e.g. 192.168.168.100)")
+    parser.add_argument("--interface", default="192.168.168.10", help="Network interface IP to bind (default: 192.168.168.10)")
     parser.add_argument("--source", default=None, help="Filter by transmitter source IP (e.g. 192.168.168.55)")
     
     # PCAP mode

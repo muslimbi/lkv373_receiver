@@ -207,7 +207,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="HDMI-over-IP Receiver & Display System")
     parser.add_argument("--group", default="226.2.2.2", help="Multicast group IP address")
     parser.add_argument("--port", type=int, default=2068, help="UDP destination port")
-    parser.add_argument("--interface", default="0.0.0.0", help="Local network adapter IP")
+    parser.add_argument("--interface", default="192.168.168.10", help="Local network adapter IP")
     parser.add_argument("--source", default=None, help="Filter by transmitter IP")
     parser.add_argument("--fullscreen", action="store_true", help="Launch in fullscreen HDMI output mode")
     parser.add_argument("--monitor", type=int, default=0, help="Target monitor index for fullscreen")

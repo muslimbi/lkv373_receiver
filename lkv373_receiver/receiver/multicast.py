@@ -25,14 +25,14 @@ class MulticastReceiver:
         self,
         group_ip: str = "226.2.2.2",
         port: int = 2068,
-        interface_ip: str = "0.0.0.0",
+        interface_ip: str = "192.168.168.10",
         source_ip: str | None = None,
         buffer_size: int = 2097152,  # 2MB socket buffer
         queue_maxsize: int = 2000,
     ):
         self.group_ip = group_ip
         self.port = port
-        self.interface_ip = interface_ip or "0.0.0.0"
+        self.interface_ip = interface_ip or "192.168.168.10"
         self.source_ip = source_ip
         self.buffer_size = buffer_size
 
@@ -84,6 +84,15 @@ class MulticastReceiver:
                 socket.inet_aton(self.interface_ip),
             )
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            
+            # Set multicast outgoing/IGMP interface (CRITICAL for Windows multi-homed systems)
+            if self.interface_ip and self.interface_ip != "0.0.0.0":
+                try:
+                    local_addr = socket.inet_aton(self.interface_ip)
+                    self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, local_addr)
+                except OSError as e:
+                    logger.warning(f"Failed to set IP_MULTICAST_IF on {self.interface_ip}: {e}")
+
             logger.info(
                 f"Joined multicast group {self.group_ip}:{self.port} on interface {self.interface_ip}"
             )
@@ -104,8 +113,19 @@ class MulticastReceiver:
                 recv_time = time.time()
                 src_host = addr[0]
 
+                if not hasattr(self, "_first_packet_logged"):
+                    logger.info(
+                        f"FIRST UDP PACKET RECEIVED from {src_host}:{addr[1]} ({len(data)} bytes)"
+                    )
+                    self._first_packet_logged = True
+
                 # Optional source IP filter
                 if self.source_ip and src_host != self.source_ip:
+                    if not hasattr(self, "_mismatch_logged"):
+                        logger.warning(
+                            f"Received UDP packet from {src_host}:{addr[1]}, but source filter is set to {self.source_ip}! Dropping packet due to mismatch."
+                        )
+                        self._mismatch_logged = True
                     continue
 
                 try:
